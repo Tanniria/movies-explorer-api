@@ -16,6 +16,6 @@
 
 IP 158.160.48.180
 
-Frontend 
+Frontend https://movies-explorer.nomoredomains.xyz
 
-Backend 
+Backend https://api.movies-explorers.nomoredomains.xyz
