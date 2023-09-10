@@ -1,48 +1,37 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const helmet = require('helmet');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const helmet = require('helmet');
 const { errors } = require('celebrate');
-
-const { PORT, DB_URL } = require('./utils/constants');
-const { auth } = require('./middlewares/auth');
-const { requestLogger, errorLogger } = require('./middlewares/logger');
-const { createUser, login } = require('./controllers/users');
-const { validateSignin, validateSignup } = require('./middlewares/validate');
-const limiter = require('./middlewares/rateLimit');
-const NotFoundError = require('./errors/notFoundError');
 const defaultError = require('./middlewares/defaultError');
+const router = require('./routes');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+const { MONGO_URL } = require('./utils/constants');
+const limiter = require('./middlewares/rateLimit');
+
+const { PORT = 3000 } = process.env;
 
 const app = express();
-app.use(express.json());
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(limiter);
-app.use(helmet());
 app.use(cors());
+
+mongoose.connect(MONGO_URL);
+
+app.use(limiter);
+
+app.use(helmet());
+
 app.use(requestLogger);
 
-mongoose.connect(DB_URL);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use('/signin', validateSignin, login);
-app.use('/signup', validateSignup, createUser);
-
-app.use(auth);
-
-app.use('/movies', require('./routes/movies'));
-app.use('/users', require('./routes/users'));
-
-app.use('/*', (req, res, next) => {
-  next(new NotFoundError('Страница не найдена'));
-});
+app.use(router);
 
 app.use(errorLogger);
+
 app.use(errors());
+
 app.use(defaultError);
 
-app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`);
-});
+app.listen(PORT);
